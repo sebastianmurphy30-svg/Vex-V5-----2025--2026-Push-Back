@@ -1,0 +1,190 @@
+#region VEXcode Generated Robot Configuration
+from vex import *
+import urandom
+import math
+
+# Brain should be defined by default
+brain=Brain()
+
+# Robot configuration code
+FrontLeftMotor = Motor(Ports.PORT4, GearSetting.RATIO_18_1, False)
+MiddleLeftMotor = Motor(Ports.PORT2, GearSetting.RATIO_18_1, False)
+BackLeftMotor = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
+FrontRightMotor = Motor(Ports.PORT3, GearSetting.RATIO_18_1, False)
+MiddleRightMotor = Motor(Ports.PORT5, GearSetting.RATIO_18_1, False)
+BackRightMotor = Motor(Ports.PORT6, GearSetting.RATIO_18_1, False)
+controller_1 = Controller(PRIMARY)
+
+
+# wait for rotation sensor to fully initialize
+wait(30, MSEC)
+
+
+# Make random actually random
+def initializeRandomSeed():
+    wait(100, MSEC)
+    random = brain.battery.voltage(MV) + brain.battery.current(CurrentUnits.AMP) * 100 + brain.timer.system_high_res()
+    urandom.seed(int(random))
+      
+# Set random seed 
+initializeRandomSeed()
+
+
+def play_vexcode_sound(sound_name):
+    # Helper to make playing sounds from the V5 in VEXcode easier and
+    # keeps the code cleaner by making it clear what is happening.
+    print("VEXPlaySound:" + sound_name)
+    wait(5, MSEC)
+
+# add a small delay to make sure we don't print in the middle of the REPL header
+wait(200, MSEC)
+# clear the console to make sure we don't have the REPL in the console
+print("\033[2J")
+
+#endregion VEXcode Generated Robot Configuration
+
+# ------------------------------------------
+# 
+# 	Project:
+#	Author:
+#	Created:
+#	Configuration:
+# 
+# ------------------------------------------
+
+# Library imports
+from vex import *
+Veloity = 0
+
+Controller = Controller()
+
+LeftSideVelocity = 0
+RightSideVelocity = 0
+
+#Left Motors
+FrontLeftMotor = Motor(Ports.PORT4, False)
+MiddleLeftMotor = Motor(Ports.PORT2, False)
+BackLeftMotor = Motor(Ports.PORT1, False)
+
+#Right Motors
+FrontRightMotor = Motor(Ports.PORT3, False)
+MiddleRightMotor = Motor(Ports.PORT5, False)
+BackRightMotor = Motor(Ports.PORT6, False)
+
+
+def SpinLeftMotorsSetDist(Amount, Unit, Velocity):
+        
+    FrontLeftMotor.set_velocity(Velocity, PERCENT)
+    MiddleLeftMotor.set_velocity(Velocity, PERCENT)
+    BackLeftMotor.set_velocity(Velocity, PERCENT)
+    
+    if Velocity >= 0:
+        Direction = "FORWARD"
+    if Velocity < 0:
+        Direction = "BACKWARD"
+
+    FrontLeftMotor.spin_for(Direction, Amount, Unit)
+    MiddleLeftMotor.spin_for(Direction, Amount, Unit)
+    BackLeftMotor.spin_for(Direction, Amount, Unit)
+
+def SpinRightMotorsSetDist(Amount, Unit, Velocity):
+        
+    FrontRightMotor.set_velocity(Velocity, PERCENT)
+    MiddleRightMotor.set_velocity(Velocity, PERCENT)
+    BackRightMotor.set_velocity(Velocity, PERCENT)
+    
+    if Velocity >= 0:
+        Direction = "FORWARD"
+    if Velocity < 0:
+        Direction = "BACKWARD"
+
+    FrontRightMotor.spin_for(Direction, Amount, Unit)
+    MiddleRightMotor.spin_for(Direction, Amount, Unit)
+    BackRightMotor.spin_for(Direction, Amount, Unit)
+
+
+def SpinLeftMotorsUntil(Velocity):
+    
+    Direction = ""
+
+    FrontLeftMotor.set_velocity(Velocity, PERCENT)
+    MiddleLeftMotor.set_velocity(Velocity, PERCENT)
+    BackLeftMotor.set_velocity(Velocity, PERCENT)
+    
+    if Velocity >= 0:
+        Direction = "FORWARD"
+    if Velocity < 0:
+        Direction = "BACKWARD"
+
+    FrontLeftMotor.spin(Direction)
+    MiddleLeftMotor.spin(Direction)
+    BackLeftMotor.spin(Direction)
+
+def SpinRightMotorsUntil(Velocity):
+        
+    FrontRightMotor.set_velocity(Velocity, PERCENT)
+    MiddleRightMotor.set_velocity(Velocity, PERCENT)
+    BackRightMotor.set_velocity(Velocity, PERCENT)
+    
+    if Velocity >= 0:
+        Direction = "FORWARD"
+    if Velocity < 0:
+        Direction = "BACKWARD"
+
+    FrontRightMotor.spin(Direction)
+    MiddleRightMotor.spin(Direction)
+    BackRightMotor.spin(Direction)
+
+def StopLeftMotors():
+    FrontLeftMotor.stop()
+    MiddleLeftMotor.stop()
+    BackLeftMotor.stop()
+
+def StopRightMotors():
+    FrontRightMotor.stop()
+    MiddleRightMotor.stop()
+    BackRightMotor.stop()
+
+def FindLeftJoystickVelocity(JoystickPosition, NumberToRoundTo):
+    return int(NumberToRoundTo * round(float(JoystickPosition)/NumberToRoundTo))
+
+def FindRightJoystickVelocity(JoystickPosition, NumberToRoundTo):
+    return int(NumberToRoundTo * round(float(JoystickPosition)/NumberToRoundTo))
+
+
+# Begin project code
+
+#Check If For Spinning Motors I Need Direction
+
+
+def pre_autonomous():
+    # actions to do when the program starts
+    brain.screen.clear_screen()
+    brain.screen.print("pre auton code")
+    wait(1, SECONDS)
+
+def autonomous():
+    brain.screen.clear_screen()
+    brain.screen.print("autonomous code")
+    # place automonous code here
+
+def user_control():
+    brain.screen.clear_screen()
+    # place driver control in this while loop
+    while True:
+        wait(20, MSEC)
+        
+        LeftSideVelocity = FindLeftJoystickVelocity(controller_1.axis3, 20)
+        RightSideVelocity = FindRightJoystickVelocity(controller_1.axis2, 20)
+
+        if LeftSideVelocity != 0 or RightSideVelocity != 0:
+            SpinLeftMotorsUntil(LeftSideVelocity)
+            SpinRightMotorsUntil(RightSideVelocity)
+
+        if RightSideVelocity == 0 and RightSideVelocity == 0:
+            StopLeftMotors()
+            StopRightMotors()
+
+# create competition instance
+comp = Competition(user_control, autonomous)
+pre_autonomous()
