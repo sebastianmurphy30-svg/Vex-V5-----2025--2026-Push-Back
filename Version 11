@@ -1,0 +1,290 @@
+#region VEXcode Generated Robot Configuration
+from vex import *
+import urandom
+import math
+
+# Brain should be defined by default
+brain=Brain()
+
+# Robot configuration code
+FrontLeftMotor = Motor(Ports.PORT20, GearSetting.RATIO_18_1, False)
+BackLeftMotor = Motor(Ports.PORT10, GearSetting.RATIO_18_1, False)
+FrontRightMotor = Motor(Ports.PORT15, GearSetting.RATIO_18_1, False)
+BackRightMotor = Motor(Ports.PORT5, GearSetting.RATIO_18_1, False)
+controller_1 = Controller(PRIMARY)
+
+
+# wait for rotation sensor to fully initialize
+wait(30, MSEC)
+
+
+# Make random actually random
+def initializeRandomSeed():
+    wait(100, MSEC)
+    random = brain.battery.voltage(MV) + brain.battery.current(CurrentUnits.AMP) * 100 + brain.timer.system_high_res()
+    urandom.seed(int(random))
+      
+# Set random seed 
+initializeRandomSeed()
+
+
+def play_vexcode_sound(sound_name):
+    # Helper to make playing sounds from the V5 in VEXcode easier and
+    # keeps the code cleaner by making it clear what is happening.
+    print("VEXPlaySound:" + sound_name)
+    wait(5, MSEC)
+
+# add a small delay to make sure we don't print in the middle of the REPL header
+wait(200, MSEC)
+# clear the console to make sure we don't have the REPL in the console
+print("\033[2J")
+
+#endregion VEXcode Generated Robot Configuration
+
+# ------------------------------------------
+# 
+# 	Project:
+#	Author:
+#	Created:
+#	Configuration:
+# 
+# ------------------------------------------
+
+# Library imports
+from vex import *
+import math
+Veloity = 0
+
+Controller = Controller()
+
+LeftSideVelocity = 0
+RightSideVelocity = 0
+DriveModeSelected = "Normal"
+ModeSelected = "Normal"
+
+
+Precision = 0
+
+#Left Motors
+FrontLeftMotor = Motor(Ports.PORT4, False)
+BackLeftMotor = Motor(Ports.PORT1, False)
+
+#Right Motors
+FrontRightMotor = Motor(Ports.PORT3, False)
+BackRightMotor = Motor(Ports.PORT6, False)
+
+
+def SpinLeftMotorsSetDist(Amount, Unit, Velocity):
+        
+    FrontLeftMotor.set_velocity(Velocity, PERCENT)
+    BackLeftMotor.set_velocity(Velocity, PERCENT)
+    
+    if Velocity >= 0:
+        Direction = "FORWARD"
+    if Velocity < 0:
+        Direction = "BACKWARD"
+
+    FrontLeftMotor.spin_for(Direction, Amount, Unit)
+    BackLeftMotor.spin_for(Direction, Amount, Unit)
+
+def SpinRightMotorsSetDist(Amount, Unit, Velocity):
+        
+    FrontRightMotor.set_velocity(Velocity, PERCENT)
+    BackRightMotor.set_velocity(Velocity, PERCENT)
+    
+    if Velocity >= 0:
+        Direction = "FORWARD"
+    if Velocity < 0:
+        Direction = "BACKWARD"
+
+    FrontRightMotor.spin_for(Direction, Amount, Unit)
+    BackRightMotor.spin_for(Direction, Amount, Unit)
+
+
+def SpinLeftMotorsUntil(Velocity):
+    
+    Direction = ""
+
+    FrontLeftMotor.set_velocity(Velocity, PERCENT)
+    BackLeftMotor.set_velocity(Velocity, PERCENT)
+    
+    if Velocity >= 0:
+        Direction = "FORWARD"
+    if Velocity < 0:
+        Direction = "BACKWARD"
+
+    FrontLeftMotor.spin(Direction)
+    BackLeftMotor.spin(Direction)
+
+def SpinRightMotorsUntil(Velocity):
+        
+    FrontRightMotor.set_velocity(Velocity, PERCENT)
+    BackRightMotor.set_velocity(Velocity, PERCENT)
+    
+    if Velocity >= 0:
+        Direction = "FORWARD"
+    if Velocity < 0:
+        Direction = "BACKWARD"
+
+    FrontRightMotor.spin(Direction)
+    BackRightMotor.spin(Direction)
+
+def StopLeftMotors():
+    FrontLeftMotor.stop()
+    BackLeftMotor.stop()
+
+def StopRightMotors():
+    FrontRightMotor.stop()
+    BackRightMotor.stop()
+
+def FindJoystickVelocity(JoystickPosition, NumberToRoundTo, Precision):
+    return int(round((JoystickPosition + 1) / NumberToRoundTo) / Precision)
+
+
+
+#G
+
+
+def SelectDriveMode(ButtonPressed):
+    global DriveModeSelected
+    if ButtonPressed == "X":
+        DriveModeSelected = "Normal"
+    if ButtonPressed == "A":
+        DriveModeSelected = "Rotational"
+    if ButtonPressed == "B":
+        DriveModeSelected = "Linear"
+    
+def SelectMode(ButtonPressed):
+    global DriveModeSelected
+    if ButtonPressed == "RightButton1":
+        DriveModeSelected = "Precise"
+    if ButtonPressed == "LeftButton1":
+        DriveModeSelected = "Normal"
+
+
+def NormalDrive(NumberToRoundTo, Precision):
+    LeftSideVelocity = FindJoystickVelocity(controller_1.axis3, NumberToRoundTo, Precision)
+    RightSideVelocity = FindJoystickVelocity(controller_1.axis2, NumberToRoundTo, Precision)
+
+    if LeftSideVelocity != 0 or RightSideVelocity != 0:
+        SpinLeftMotorsUntil(LeftSideVelocity)
+        SpinRightMotorsUntil(RightSideVelocity)
+
+    if RightSideVelocity == 0 and RightSideVelocity == 0:
+        StopLeftMotors()
+        StopRightMotors()
+
+def RotationDrive(NumberToRoundTo, Precision):
+    RotationalVelocity = 0
+    LeftSideVelocity = FindJoystickVelocity(controller_1.axis3, NumberToRoundTo, Precision)
+    RightSideVelocity = FindJoystickVelocity(controller_1.axis2, NumberToRoundTo, Precision)
+
+    if RotationalVelocity != 0 and LeftSideVelocity > RightSideVelocity:
+        RotationalVelocity = abs((LeftSideVelocity / 2) - (RightSideVelocity / 2))
+        SpinLeftMotorsUntil(RotationalVelocity)
+        SpinRightMotorsUntil(-1 * (RotationalVelocity))
+
+    if RotationalVelocity != 0 and RightSideVelocity > LeftSideVelocity:
+        RotationalVelocity = abs((RightSideVelocity / 2) - (LeftSideVelocity / 2))
+        SpinRightMotorsUntil(RotationalVelocity)
+        SpinLeftMotorsUntil(-1 * (RotationalVelocity))
+
+    if RotationalVelocity == 0:
+        StopLeftMotors()
+        StopRightMotors()
+
+def LinearDrive(NumberToRoundTo, Precision):
+    AverageVelocity = 0
+    LeftSideVelocity = FindJoystickVelocity(controller_1.axis3, NumberToRoundTo, Precision)
+    RightSideVelocity = FindJoystickVelocity(controller_1.axis2, NumberToRoundTo, Precision)
+
+    AverageVelocity = (LeftSideVelocity + RightSideVelocity) / 2
+
+    if AverageVelocity != 0:
+        SpinLeftMotorsUntil(AverageVelocity)
+        SpinRightMotorsUntil(AverageVelocity)
+
+    if AverageVelocity == 0:
+        StopLeftMotors()
+        StopRightMotors()
+
+#G
+
+def pre_autonomous():
+    # actions to do when the program starts
+    brain.screen.clear_screen()
+    brain.screen.print("pre auton code")
+    wait(1, SECONDS)
+
+def autonomous():
+    brain.screen.clear_screen()
+    brain.screen.print("autonomous code")
+    # place automonous code here
+
+def user_control():
+    brain.screen.clear_screen()
+    # place driver control in this while loop
+    FrontLeftMotor.spin(FORWARD)
+
+    wait(2000, MSEC)
+    
+    FrontLeftMotor.stop()
+    BackLeftMotor.spin(FORWARD)
+
+    wait(2000, MSEC)
+
+    BackLeftMotor.stop()
+    FrontRightMotor.spin(FORWARD)
+
+    wait(2000, MSEC)
+
+    FrontRightMotor.stop()
+    BackRightMotor.spin(FORWARD)
+    
+    wait(2000, MSEC)
+
+    BackRightMotor.stop()
+
+    wait(2000, MSEC)
+
+    SpinLeftMotorsUntil(100)
+
+    wait(2000, MSEC)
+
+    StopLeftMotors()
+    SpinRightMotorsUntil(100)
+
+    wait(2000, MSEC)
+
+    StopRightMotors()
+    
+    while True:
+        wait(20, MSEC)
+
+        controller_1.buttonL1.pressed(SelectMode("LeftButton1"))
+        controller_1.buttonR2.pressed(SelectMode("RightButton1"))
+
+        controller_1.buttonA.pressed(SelectDriveMode("X"))
+        controller_1.buttonB.pressed(SelectDriveMode("A"))
+        controller_1.buttonB.pressed(SelectDriveMode("B"))
+
+        if ModeSelected == "Normal":
+            Precision = 1
+        
+        elif ModeSelected == "Precise":
+            Precision = 10
+
+
+        if DriveModeSelected == "Normal":
+                NormalDrive(20, Precision)
+        elif DriveModeSelected == "Rotational":
+                RotationDrive(10, Precision)
+        elif DriveModeSelected == "Linear":
+                LinearDrive(20, Precision)
+    
+        
+        
+
+# create competition instance
+comp = Competition(user_control, autonomous)
+pre_autonomous()
