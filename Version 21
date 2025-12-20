@@ -8,7 +8,7 @@ brain=Brain()
 
 # Robot configuration code 
 controller_1 = Controller(PRIMARY)
-BottomHalfIntake = Motor(Ports.PORT6, GearSetting.RATIO_18_1, False)
+BottomHalfIntake = Motor(Ports.PORT6, GearSetting.RATIO_18_1, False) 
 TopIntakeMotor = Motor(Ports.PORT9, GearSetting.RATIO_18_1, False)
 MiddleIntakeMotor = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
 LeftMotorGroup_motor_a = Motor(Ports.PORT20, GearSetting.RATIO_18_1, False)
