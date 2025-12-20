@@ -1,4 +1,4 @@
-#region VEXcode Generated Robot Configuration
+#region VEXcode Generated Robot Configuration 
 from vex import *
 import urandom
 import math
