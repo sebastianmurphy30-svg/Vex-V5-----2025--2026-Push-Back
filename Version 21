@@ -6,7 +6,7 @@ import math
 # Brain should be defined by default
 brain=Brain()
 
-# Robot configuration code
+# Robot configuration code 
 controller_1 = Controller(PRIMARY)
 BottomHalfIntake = Motor(Ports.PORT6, GearSetting.RATIO_18_1, False)
 TopIntakeMotor = Motor(Ports.PORT9, GearSetting.RATIO_18_1, False)
