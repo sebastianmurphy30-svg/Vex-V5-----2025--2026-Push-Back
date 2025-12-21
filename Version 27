@@ -321,7 +321,7 @@ def autonomous():
     SpinLeftMotorsUntil(100)
     SpinRightMotorsUntil(100)
 
-    wait(3000, MSEC)
+    wait(2000, MSEC)
 
     StopRightMotors()
     StopLeftMotors()
