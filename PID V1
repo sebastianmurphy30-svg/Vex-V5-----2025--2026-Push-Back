@@ -1,0 +1,85 @@
+import math
+from dataclasses import dataclass
+
+@dataclass
+class Point:
+    X: float
+    Y: float
+    R: float #Rotation
+
+@dataclass
+class Errors:
+    Linear: float
+    Rotational: float
+
+@dataclass
+class MotionControllerOutputValue():
+    LinearError: float
+    RotationalError: float
+    RightVelocity: float
+    LeftVelocity: float
+
+
+DiameterOfWheels = 3.23
+
+LinearPastErrors = []
+RotationalPastErrors = []
+
+RobotOriginalPosition = Point()
+RobotCurrentPosition = Point()
+RobotTargetPosition = Point()
+
+
+def CalculateError(OriginalPos, CurrentPos, TargetPos, WheelDiameter, AverageWheelTicks):
+    TotalLinearDistance = math.hypot((TargetPos.X - OriginalPos.X), (TargetPos.Y - OriginalPos.Y))
+    CurrentLinearDistance = AverageWheelTicks
+
+    ConvertedTotalLinearDistance = ConvertToTicks(WheelDiameter, TotalLinearDistance)
+
+    LinearError = ConvertedTotalLinearDistance - CurrentLinearDistance
+
+    TotalRotationalDifference = abs(TargetPos.R - OriginalPos.R)
+    CurrentRotationalDifferenceFromOriginalPos = abs(CurrentPos.R - OriginalPos.R)
+
+    RotationalError = TotalRotationalDifference - CurrentRotationalDifferenceFromOriginalPos
+
+    return Errors(LinearError, RotationalError)
+
+def ConvertToTicks(WheelDiameter, Distance):
+    Ticks = (Distance / (WheelDiameter * math.pi)) * 360
+    return Ticks
+
+def CalculatePID(CurrentError, PastErrors):
+    KP = 0
+    KI = 0
+    KD = 0
+
+    P = 0
+    I = 0
+    D = 0
+
+    P = KP * CurrentError
+    
+    I = KI* sum(PastErrors)
+
+    if len(PastErrors) > 0:
+        D = KD * (CurrentError - PastErrors[-1])
+    else:
+        D = 0
+
+    
+    Output = (P) + (I) + (D)
+    return Output
+
+def MotionControllerOutput(OriginalPosition, CurrentPosition, TargetPosition, WheelDiameter, LinearPastErrors, RotationalPastErrors, AverageWheelTicks):
+
+    CurrentError = CalculateError(OriginalPosition, CurrentPosition, TargetPosition, WheelDiameter)
+
+    LinearOutput = CalculatePID(CurrentError.Linear, LinearPastErrors)
+    RotationalOutput = CalculatePID(CurrentError.Rotational, RotationalPastErrors)
+
+    LeftMotorsVelocity = LinearOutput + RotationalOutput
+    RightMotorsVelocity = LinearOutput - RotationalOutput
+
+    return MotionControllerOutputValue(CurrentError.Linear, CurrentError.Rotational, LeftMotorsVelocity, RightMotorsVelocity)
+
