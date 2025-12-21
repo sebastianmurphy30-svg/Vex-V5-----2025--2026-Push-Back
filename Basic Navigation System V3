@@ -1,0 +1,45 @@
+import math
+from dataclasses import dataclass
+
+@dataclass
+class Point:
+    X: float
+    Y: float
+
+@dataclass
+class PointAndDistance:
+    X: float
+    Y: float
+    D: float #Distance
+
+@dataclass
+class TravelPointInstructions:
+    D: float #Distance
+    A: float #Angle
+
+
+
+GoalsPositions = []
+ScorableObjectsPositions = [Point(1789, 1789), Point(-2189, -2189), Point(1873, 1873), Point(-1972, -1972)]
+
+ListOfTargets = [GoalsPositions,ScorableObjectsPositions]
+CurrentPosition
+
+def CalculateClosestObjective(CurrentPosition, PositionsOfObjects):
+    
+    DistancesOfTarget = [] 
+
+    for i in range(len(PositionsOfObjects)):
+        DistancesOfTargetX = (abs((CurrentPosition.X) - (PositionsOfObjects[i])))
+        DistancesOfTargetY = (abs((CurrentPosition.Y) - (PositionsOfObjects[i])))
+        DistancesOfTarget.append(math.sqrt(DistancesOfTargetX ** 2 + DistancesOfTargetY ** 2))
+
+    Target = PointAndDistance(PositionsOfObjects[DistancesOfTarget.index(min(DistancesOfTarget))], PositionsOfObjects[DistancesOfTarget.index(min(DistancesOfTarget))], min(DistancesOfTarget))
+    return Target
+
+def CalculatePathToObjective(CurrentPosition, Target):
+    AngleToTravel = math.degrees(math.atan2(Target.Y - CurrentPosition.Y, Target.X - CurrentPosition.X))
+    Instructions = TravelPointInstructions(AngleToTravel, Target.D)
+    print(Instructions)
+    
+
