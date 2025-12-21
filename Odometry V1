@@ -1,0 +1,63 @@
+import math
+from dataclasses import dataclass
+
+WheelDiameter = 3.25
+GearRatio = 1
+
+@dataclass
+class Point:
+    X: int
+    Y: int
+
+@dataclass
+class ReturnValues:
+    CurrentPosition: Point
+    OlWheelAngle: int
+
+@dataclass
+class LeftAndRightMotorTicks:
+    LMT: int
+    RMT: int
+
+
+CurrentPosition = Point(0,0)
+
+def CalculateMotorTicks():
+    
+    FrontLeftMotorTicks = 0
+    BackLeftMotorTicks = 0
+
+    FrontRightMotorTicks = 0
+    BackRightMotorTicks = 0
+
+    LeftMotorsTicks = (FrontLeftMotorTicks + BackLeftMotorTicks) / 2
+    RightMotorTicks = (FrontRightMotorTicks + BackRightMotorTicks) / 2
+
+    return LeftAndRightMotorTicks(LeftMotorsTicks, RightMotorTicks)
+
+def CalculateCurrentPosition(CurrentPos, OldWheelAngle, WheelDiameter, GearRatio, LeftWheelTicks, RightWheelTicks):
+    
+    NewPoint = Point(0,0)
+
+    AngleTraveled = 0
+
+    Delta = Point(0,0)
+
+    Distance = 0
+
+    CurrentWheelAngle = (LeftWheelTicks + RightWheelTicks) / 2
+
+    #Odometry Distance Calculations
+    Distance =  (CurrentWheelAngle - OldWheelAngle)* (GearRatio / 360) * math.pi * WheelDiameter
+
+    Delta.X = Distance * math.sin(AngleTraveled)
+    Delta.Y = Distance * math.cos(AngleTraveled)
+
+    NewPoint.X = CurrentPos.X + Delta.X
+    NewPoint.Y = CurrentPos.Y + Delta.Y
+
+    PastWheelAngle = CurrentWheelAngle
+
+    return ReturnValues(NewPoint, PastWheelAngle)
+
+
