@@ -1,0 +1,69 @@
+import math
+from dataclasses import dataclass
+
+WheelDiameter = 82.042
+
+@dataclass
+class Errors:
+    Linear: float
+    Rotational: float
+
+@dataclass
+class MotionControllerOutputValue:
+    LinearError: float
+    RotationalError: float
+    RightVelocity: float
+    LeftVelocity: float
+
+
+def CalculateError(StartingTicks, CurrentTicks, TargetTicks):
+    Error = TargetTicks - (CurrentTicks - StartingTicks)
+    return Error
+
+def ConvertToTicks(WheelDiameter, Distance):
+    Ticks = (Distance / (WheelDiameter * math.pi)) * 360
+    return Ticks
+
+
+def CalculatePID(CurrentError, PastErrors):
+    KP = 0
+    KI = 0
+    KD = 0
+
+    P = 0
+    I = 0
+    D = 0
+
+    P = KP * CurrentError
+    
+    I = KI* sum(PastErrors)
+
+    if len(PastErrors) > 0:
+        D = KD * (CurrentError - PastErrors[-1])
+    else:
+        D = 0
+    
+    Output = (P) + (I) + (D)
+
+    if Output > 100:
+        Output = 100
+    elif Output < -100:
+        Output = -100
+
+    return Output
+
+def MotionControllerOutput(StartingLinearTicks, CurrentLinearTicks, TargetLinearTicks, StartingRotationalTicks, CurrentRotationalTicks, TargetRotationalTicks, WheelDiameter, LinearPastErrors, RotationalPastErrors):
+
+    LinearError = CalculateError(StartingLinearTicks, CurrentLinearTicks, TargetLinearTicks)
+    RotationalError = CalculateError(StartingRotationalTicks, CurrentRotationalTicks, TargetRotationalTicks)
+
+    LinearOutput = CalculatePID(LinearError, LinearPastErrors)
+    RotationalOutput = CalculatePID(RotationalError, RotationalPastErrors)
+
+    LeftMotorsVelocity = LinearOutput + RotationalOutput
+    RightMotorsVelocity = LinearOutput - RotationalOutput
+
+    return MotionControllerOutputValue(LinearError, RotationalError, RightMotorsVelocity, LeftMotorsVelocity)
+
+
+    
