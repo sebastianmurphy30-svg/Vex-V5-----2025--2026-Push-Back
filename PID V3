@@ -1,0 +1,110 @@
+import math
+from dataclasses import dataclass
+
+LinearKP = 0
+LinearKI = 0
+LinearKD = 0
+
+RotationalKP = 0
+RotationalKI = 0
+RotationalKD = 0
+
+
+
+WheelDiameter = 3.23
+
+@dataclass
+class Errors:
+    Linear: float
+    Rotational: float
+
+@dataclass
+class MotionControllerOutputValue:
+    LinearError: float
+    RotationalError: float
+    RightVelocity: float
+    LeftVelocity: float
+
+@dataclass
+class Ticks:
+    Linear: float
+    Rotational: float
+
+@dataclass
+class PID:
+    P: float
+    I: float
+    D: float
+
+LinearPID = PID(LinearKP, LinearKI, LinearKD)
+RotationalPID = PID(RotationalKP, RotationalKI, RotationalKD)
+
+
+def CalculateError(StartingTicks, CurrentTicks, TargetTicks):
+    Error = TargetTicks - (CurrentTicks - StartingTicks)
+    return Error
+
+def ConvertToTicks(WheelDiameter, Distance):
+    Ticks = (Distance / ((WheelDiameter * 25.4) * math.pi)) * 360
+    return Ticks
+
+
+def CalculatePID(CurrentError, SumOfPastErrors, PastError, KP, KI, KD):
+
+    P = 0
+    I = 0
+    D = 0
+
+    P = KP * CurrentError
+    
+    I = KI* SumOfPastErrors
+
+    D = KD * (CurrentError - PastError)
+    
+    Output = (P) + (I) + (D)
+
+    if Output > 100:
+        Output = 100
+    elif Output < -100:
+        Output = -100
+
+    return Output
+
+def MotionControllerOutput(StartingLinearTicks, CurrentLinearTicks, TargetLinearTicks, StartingRotationalTicks, CurrentRotationalTicks, TargetRotationalTicks, WheelDiameter, SumOfPastLinearErrors, SumOfPastRotationalErrors, LinearPID, RotationalPID, PreviousLinearError, PreviousRotationalError):
+
+    LinearError = CalculateError(StartingLinearTicks, CurrentLinearTicks, TargetLinearTicks)
+    RotationalError = CalculateError(StartingRotationalTicks, CurrentRotationalTicks, TargetRotationalTicks)
+
+    LinearOutput = CalculatePID(LinearError, SumOfPastLinearErrors, PreviousLinearError, LinearPID.P, LinearPID.I, LinearPID.D)
+    RotationalOutput = CalculatePID(RotationalError, SumOfPastRotationalErrors, PreviousRotationalError, RotationalPID.P, RotationalPID.I, RotationalPID.D)
+
+    LeftMotorsVelocity = LinearOutput + RotationalOutput
+    RightMotorsVelocity = LinearOutput - RotationalOutput
+
+    return MotionControllerOutputValue(LinearError, RotationalError, RightMotorsVelocity, LeftMotorsVelocity)
+
+def RunTimePID(TargetTicks, StartingTicks, WheelDiameter):
+    
+    RouteFinished = False
+
+    global LinearPID
+    global RotationalPID
+
+    SumOfPastLinearErrors = 0
+    SumOfPastRotationalErrors = 0
+
+    PreviousError = Ticks(0,0)
+
+    
+    while RouteFinished == False:
+        CurrentTicks = Ticks()
+        
+        RecievedValue = MotionControllerOutput(StartingTicks.Linear, CurrentTicks.Linear, TargetTicks.Linear, StartingTicks.Rotational, CurrentTicks.Rotational, TargetTicks.Rotational, WheelDiameter, SumOfPastLinearErrors, SumOfPastRotationalErrors, LinearPID, RotationalPID, PreviousError.Linear, PreviousError.Rotational)
+        
+        PreviousError = Ticks(RecievedValue.LinearError, RecievedValue.RotationalError)
+
+        SumOfPastLinearErrors += RecievedValue.LinearError
+        SumOfPastRotationalErrors += RecievedValue.RotationalError
+        
+        if (-5 < RecievedValue.LinearError and RecievedValue.LinearError < 5) and (-5 < RecievedValue.RotationalError and RecievedValue.RotationalError < 5):
+            RouteFinished = True
