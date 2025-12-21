@@ -1,0 +1,38 @@
+import math
+
+
+GoalsPositionX = []
+GoalsPositionY = []
+ScorableObjectsPositionX = [1789,-2189,1873,-1972]
+ScorableObjectsPositionY = [1789,-2189,1873,-1972]
+
+ListOfTargetListsX = [GoalsPositionX,ScorableObjectsPositionX]
+ListOfTargetListsY = [GoalsPositionY,ScorableObjectsPositionY]
+DistancesOfTargetX = []
+DistancesOfTargetY = []
+DistancesOfTargetXandY = []
+HypotnusesOfTargets = []
+TargetX = 0
+TargetY = 0
+
+CurrentX = 500
+CurrentY = -689
+AngleToTravel = 0
+DistanceToTravel = 0
+
+for i in range(4):
+    DistancesOfTargetX.append(abs(CurrentX - ScorableObjectsPositionX[i]))
+    DistancesOfTargetY.append(abs(CurrentY - ScorableObjectsPositionY[i]))
+    DistancesOfTargetXandY.append(math.sqrt(DistancesOfTargetX[i] ** 2 + DistancesOfTargetY[i] ** 2))
+print(DistancesOfTargetX)
+print(DistancesOfTargetY)
+
+TargetX = ScorableObjectsPositionX[DistancesOfTargetXandY.index(min(DistancesOfTargetXandY))]
+TargetY = ScorableObjectsPositionY[DistancesOfTargetXandY.index(min(DistancesOfTargetXandY))]
+
+print(TargetX)
+print(TargetY)
+
+AngleToTravel = math.degrees(math.atan2(TargetY - CurrentY, TargetX - CurrentX))
+AngleToTravel = (AngleToTravel + 360) % 360
+print(AngleToTravel,"°")
