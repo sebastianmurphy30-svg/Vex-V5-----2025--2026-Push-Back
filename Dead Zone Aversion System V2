@@ -1,0 +1,210 @@
+import math
+from dataclasses import dataclass
+
+RoutePoints = []
+PotentialPoints = []
+
+WheelDiameter = 3.25
+GearRatio = 1
+
+@dataclass
+class Point:
+    X: float
+    Y: float
+
+@dataclass
+class Line:
+    P1: Point
+    P2: Point
+    S: float #Slope
+    Y: float #Y-Intercept
+    EQ: str #Equation of Line
+    EP: Point
+    SP: Point
+
+@dataclass
+class Intersection:
+    X1: Point
+    X2: Point
+    Inter: bool
+
+@dataclass
+class Circle:
+    X: float
+    Y: float
+    Radius: float
+
+@dataclass
+class TravelPointInstructions:
+    D: float #Distance
+    A: float #Angle
+
+def CalculateLine(P1, P2):
+    Slope = 0
+    Intercept = 0
+    Equation = ""
+    
+    if (P2.Y - P1.Y) == 0:
+        Slope = 0
+    elif (P2.X - P1.X) == 0:
+        Slope = 10000
+    else:
+        Slope = float(P2.Y - P1.Y) / (P2.X - P1.X)
+
+    Intercept = float(P1.Y-(Slope*P1.X))
+    Equation = "Y = ", Slope, " + ", Intercept
+    TransferData = [Slope, Intercept, Equation]
+    return TransferData
+
+def CheckLineIntersection(Line1, Line2):
+    Slope = CalculateLine(Line1.SP, Line1.EP)[0]
+    Intercept = CalculateLine(Line1.SP, Line1.EP)[1]
+    IntersectCoordinate = []
+
+    if Line1.S == 10000 or Line2.S == 10000:
+        IntersectPoint = Point(Line1.P1.X, Line2.S * Line1.P1.X + Line2.Y)
+        
+        if ((IntersectPoint.X >= Line1.SP.X and IntersectPoint.X <= Line1.EP.X) or (IntersectPoint.X >= Line1.EP.X and IntersectPoint.X <= Line1.SP.X)) and ((IntersectPoint.Y >= Line1.SP.Y and IntersectPoint.Y <= Line1.EP.Y) or (IntersectPoint.Y >= Line1.EP.Y and IntersectPoint.Y <= Line1.SP.Y)):
+            IntersectCoordinate.append(IntersectPoint)
+            IntersectCoordinate.append(True)
+            return IntersectCoordinate
+        else:        
+            IntersectCoordinate.append(False)
+            IntersectCoordinate.append(False)
+            return IntersectCoordinate
+
+
+    if (Line1.S-Line2.S) != 0 and Line1.Y-Line2.Y != 0:
+        
+        
+        if Line1.Y-Line2.Y != 0 and Line1.S-Line2.S != 0:
+            IntersectX = (Line1.Y-Line2.Y) / (Line1.S-Line2.S)
+        else:
+            IntersectX = 0
+            
+        if Line1.Y-Line2.Y != 0 and Line1.S-Line2.S != 0 and IntersectX != 0:
+            IntersectY = Line1.S * IntersectX + Line1.Y
+        else:
+            IntersectY = 0
+
+        IntersectCoordinate.append(Point(IntersectX, IntersectY))
+
+        if ((IntersectCoordinate[0].X >= Line1.SP.X and IntersectCoordinate[0].X <= Line1.EP.X) or (IntersectCoordinate[0].X >= Line1.EP.X and IntersectCoordinate[0].X <= Line1.SP.X)) and ((IntersectCoordinate[0].Y >= Line1.SP.Y and IntersectCoordinate[0].Y <= Line1.EP.Y) or (IntersectCoordinate[0].Y >= Line1.EP.Y and IntersectCoordinate[0].Y <= Line1.SP.Y)):
+            if IntersectCoordinate[0].Y == (Slope * IntersectCoordinate[0].X) + Intercept:
+                IntersectCoordinate.append(True)
+            else:
+                IntersectCoordinate.append(False) 
+        else:
+            IntersectCoordinate.append(False) 
+    else:
+        IntersectCoordinate.append(False)
+        IntersectCoordinate.append(False)
+
+    return IntersectCoordinate
+
+def CalculateMiddlePoint(Intersections):
+    return Point((Intersections[0][0].X + Intersections[1][0].X) / 2, (Intersections[0][0].Y + Intersections[1][0].Y) / 2)
+
+
+def CreateLine(P1, P2, EndPoint, StartingPoint):
+    global PotentialPoints
+    LineFormula = []
+    LineFormula = CalculateLine(P1, P2)
+    ReturnValue = Line(P1,P2, LineFormula[0], LineFormula[1], LineFormula[2], EndPoint, StartingPoint)
+    PotentialPoints.append(P1)
+    PotentialPoints.append(P2)
+    return ReturnValue
+
+def FindNearestPoint(RelationPoint, PotentialPoints):
+    PointsList = []
+    PointDistances = []
+    for i in range(len(PotentialPoints)):
+        PointDistances.append(math.sqrt(((PotentialPoints[i].X - RelationPoint.X) ** 2)  + ((PotentialPoints[i].Y - RelationPoint.Y) ** 2)))
+        PointsList.append(PotentialPoints[i])
+
+    return PointsList[PointDistances.index(min(PointDistances))]
+
+def CaculateAllIntersections(RobotPath, InvalidLines):
+    PointsOfIntersection = []
+    for i in range(len(InvalidLines)):
+        if CheckLineIntersection(RobotPath, InvalidLines[i])[1] == True:
+            PointsOfIntersection.append(CheckLineIntersection(RobotPath, InvalidLines[i]))
+    return PointsOfIntersection
+
+def CircleCreation(Center, Point):
+    XChange = (Point.X - Center.X) 
+    YChange = (Point.Y - Center.Y)
+    FinalRadius = math.sqrt(((XChange**2) + (YChange**2)))
+    return Circle(XChange, YChange, FinalRadius)
+
+def CalculateFinalPoint(CircleCenter, Point):
+    return Point(Point.X - CircleCenter.X, Point.Y - CircleCenter.Y)
+
+def CalculatePathToObjective(CurrentPosition, Target):
+    AngleToTravel = math.degrees(math.atan2(Target.Y - CurrentPosition.Y, Target.X - CurrentPosition.X))
+    Instructions = TravelPointInstructions(AngleToTravel, math.hypot(Target.Y - CurrentPosition.Y, Target.X - CurrentPosition.X))
+    return Instructions
+
+def CalculateTotalRoute(Points):
+    FinializedRoute = []
+    for i in range (len(Points)-1):
+        FinializedRoute.append(CalculatePathToObjective(Points[i], Points[i+1]))
+    return FinializedRoute
+
+
+
+
+RobotStartingPoint = Point()
+RobotGoalPoint = Point()
+
+
+def AddOnRoute(RobotStartingPoint, RobotGoalPoint):
+
+    InvalidLines = []
+    RouteFinished = False
+
+    RobotPath = CreateLine(RobotStartingPoint, RobotGoalPoint, RobotStartingPoint, RobotGoalPoint)
+    print(RobotPath)
+
+    InvalidLines.append(CreateLine(Point(0,0), Point(-1,1), Point(-100,-100), Point(100,100)))
+    InvalidLines.append(CreateLine(Point(0,0), Point(-5,5), Point(-100,-100), Point(100,100)))
+    print(InvalidLines)
+
+    print(InvalidLines[0])
+
+    print("")
+
+    
+    Intersections = []
+    Intersections = (CaculateAllIntersections(RobotPath, InvalidLines))
+
+    if len(Intersections) < 2:
+        RouteFinished = True
+        return RouteFinished
+
+    MidPoint = CalculateMiddlePoint(Intersections)
+
+    SelectedPoint = FindNearestPoint(MidPoint, PotentialPoints)
+
+    return CalculateFinalPoint(SelectedPoint, MidPoint)
+
+
+def CreateRoute(RobotStartingPoint, RobotGoalPoint):
+    RoutePoints = []
+    RouteFinished = False
+    FinalizedRoute = []
+    
+    RoutePoints.append(RobotStartingPoint)
+
+    while RouteFinished == False:
+        RouteAddOn = AddOnRoute(RoutePoints[-1], RobotGoalPoint)
+        if RouteAddOn == True:
+            RouteFinished = True
+        else:
+            RoutePoints.append(RouteAddOn)
+
+    RoutePoints.append(RobotGoalPoint)
+
+    FinalizedRoute = CalculateTotalRoute(RoutePoints)
+    return FinalizedRoute
+
