@@ -1,0 +1,130 @@
+class PID:
+    def __init__(self, P, I, D):
+        self.P = P
+        self.I = I
+        self.D = D
+
+class Point:
+    def __init__(self, X, Y):
+        self.X = X
+        self.Y = Y
+
+
+WheelDiameter = 3.25
+
+
+def CalculateError(CurrentError, TargetError):
+    return TargetError - CurrentError
+
+
+def CalculatePID(Error, SumOfPastErrors, PastError, PID):
+
+    StartI = 5
+
+    P = PID.P * Error
+    
+    if abs(Error) < StartI:
+        I = PID.I * SumOfPastErrors
+    else:
+        I = 0
+
+    D = PID.D * (Error - PastError)
+
+    
+    Output = (P) + (I) + (D)
+
+    if Output > 100:
+        Output = 100
+    elif Output < -100:
+        Output = -100
+
+    return Output
+
+def IsSettled(TimeSpentRunning, Timeout, TimeSpentSettled, SettleTime):
+    if (TimeSpentRunning > Timeout and Timeout != 0):
+        return(True)
+    if (TimeSpentSettled > SettleTime):
+        return(True)
+  
+  return(False)
+
+def LinearPID(TargetError):
+    
+    LinearPID = PID(0, 0, 0)
+    MinimumError = 0
+    
+    RunTimeDelay = 0.02
+    CurrentError = 
+    StartingError = 
+    SumOfPastErrors = 0
+    PastError = 0
+    
+    BeganSettling = False
+    IsSettled = False
+    SettleTime = 0
+    Timeout = 0
+
+    Runtime = 0
+    TimeSettled = 0
+
+    while IsSettled == False:
+
+        SumOfPastErrors += Error
+        PastError = Error
+        CurrentError = 0
+
+        if -1* MinimumError < Error < MinimumError:
+            BeganSettling = True
+
+        Error = CalculateError(CurrentError, TargetError)
+        Output = CalculatePID(Error, SumOfPastErrors, PastError, LinearPID)
+
+        IsSettled = IsSettled(Runtime, Timeout, TimeSettled, SettleTime)
+
+        if BeganSettling:
+            TimeSettled += RunTimeDelay
+
+        Runtime += RunTimeDelay
+    
+
+
+def RotationalPID(TargetError):
+    
+    RotationalPID = PID(0, 0, 0)
+    MinimumError = 0
+    
+    RunTimeDelay = 0.02
+    CurrentError = 
+    StartingError = 
+    SumOfPastErrors = 0
+    PastError = 0
+    
+    BeganSettling = False
+    IsSettled = False
+    SettleTime = 0
+    Timeout = 0
+
+    Runtime = 0
+    TimeSettled = 0
+
+    while IsSettled == False:
+
+        SumOfPastErrors += Error
+        PastError = Error
+        CurrentError = 0
+
+        if -1* MinimumError < Error < MinimumError:
+            BeganSettling = True
+
+        Error = CalculateError(CurrentError, TargetError)
+        Output = CalculatePID(Error, SumOfPastErrors, PastError, RotationalPID)
+
+        IsSettled = IsSettled(Runtime, Timeout, TimeSettled, SettleTime)
+
+        if BeganSettling:
+            TimeSettled += RunTimeDelay
+
+        Runtime += RunTimeDelay
+    
+
+
