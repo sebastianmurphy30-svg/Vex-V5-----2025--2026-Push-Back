@@ -1,0 +1,142 @@
+import math
+
+class Point:
+    def __init__(self, X, Y):    
+        self.X = X
+        self.Y = Y
+
+class Line:
+    def __init__(self, P1, P2):    
+        self.P1 = P1
+        self.P2 = P2
+
+        self.S = 0 #Slope
+        self.YDiff = P1.Y - P2.Y
+        self.XDiff = P1.X - P2.X
+    
+        self.Y = 0 #Y-Intercept
+
+        if self.XDiff == 0:
+            self.S = float('inf')
+        elif self.YDiff == 0:
+            self.S = 0
+        else:
+            self.S = self.YDiff / self.XDiff
+
+        self.Y = self.P1.Y - (self.S * self.P1.X)
+
+class Deadzone:
+    def __init__(self, Points):  
+        self.Points = Points
+    
+        self.LinesOfDeadZone = []
+
+        for i in range(len(Points)):
+            self.LinesOfDeadZone.append(Line(Points[i], Points[(i + 1) % len(Points)]))
+
+class LineIntersects:
+    def __init__(self, LTI, I, IX):  
+        #LTI = Line That Intersects
+        #I = Does It Intersect?
+        #IX = Point Of Intersection
+
+        self.LTI = LTI
+        self.I = I
+        self.IX = IX
+
+class DeadzoneIntersections:
+    def __init__(self, LineIntersects):  
+        self.LineIntersects = LineIntersects
+
+
+CurrentPath = Line(Point(0,0), Point(0,0))
+Deadzones = []
+
+def CheckForIntersections(CurrentPath, Deadzones):
+    DeadzonesThatIntersect = []
+    
+    for i in range(len(Deadzones)):
+        for k in range(len(Deadzones[i].LinesOfDeadZone)):
+            LineIntersections = []
+
+            DoesIntersect = False
+            LineToCheck = Deadzones[i].LinesOfDeadZone[k]
+
+            M = CurrentPath.S - LineToCheck.S
+            B = LineToCheck.Y - CurrentPath.Y
+
+            if CurrentPath.S == float('inf') and LineToCheck.S == float('inf') and CurrentPath.P1.X == LineToCheck.P1.X:
+                DoesIntersect = False
+                X = CurrentPath.P1.X
+                Y = 0
+
+            elif CurrentPath.S == 0 and LineToCheck.S == 0 and CurrentPath.P1.Y == LineToCheck.P1.Y:
+                DoesIntersect = False
+                X = 0
+                Y = CurrentPath.P1.Y
+                
+            elif CurrentPath.S == float('inf'):
+                X = CurrentPath.P1.X
+                Y = LineToCheck.S * X + LineToCheck.Y
+
+                if min(CurrentPath.P1.X, CurrentPath.P2.X) <= X <= max(CurrentPath.P1.X, CurrentPath.P2.X) and min(CurrentPath.P1.Y, CurrentPath.P2.Y) <= Y <= max(CurrentPath.P1.Y, CurrentPath.P2.Y):
+                    if min(LineToCheck.P1.X, LineToCheck.P2.X) <= X <= max(LineToCheck.P1.X, LineToCheck.P2.X) and min(LineToCheck.P1.Y, LineToCheck.P2.Y) <= Y <= max(LineToCheck.P1.Y, LineToCheck.P2.Y):    
+                        DoesIntersect = True
+
+                #Current Path Is Vertical and Checking Against Regular Line
+
+            elif LineToCheck.S == float('inf'):
+                X = LineToCheck.P1.X
+                Y = CurrentPath.S * X + CurrentPath.Y
+                
+                if min(CurrentPath.P1.X, CurrentPath.P2.X) <= X <= max(CurrentPath.P1.X, CurrentPath.P2.X) and min(CurrentPath.P1.Y, CurrentPath.P2.Y) <= Y <= max(CurrentPath.P1.Y, CurrentPath.P2.Y):
+                    if min(LineToCheck.P1.X, LineToCheck.P2.X) <= X <= max(LineToCheck.P1.X, LineToCheck.P2.X) and min(LineToCheck.P1.Y, LineToCheck.P2.Y) <= Y <= max(LineToCheck.P1.Y, LineToCheck.P2.Y):
+                        DoesIntersect = True
+
+                #LineToCheck  Is Vertical and Checking Against Regular Line
+
+            else:
+                if M != 0:
+                    B_DividedBy_M = B / M
+                else:
+                    B_DividedBy_M = 0
+
+                X = B_DividedBy_M
+                Y = CurrentPath.S * X + CurrentPath.Y
+
+                if (CurrentPath.S * (B_DividedBy_M) + CurrentPath.Y) == (LineToCheck.S * (B_DividedBy_M) + LineToCheck.Y):
+                    if min(CurrentPath.P1.X, CurrentPath.P2.X) <= X <= max(CurrentPath.P1.X, CurrentPath.P2.X) and min(CurrentPath.P1.Y, CurrentPath.P2.Y) <= Y <= max(CurrentPath.P1.Y, CurrentPath.P2.Y):
+                        if min(LineToCheck.P1.X, LineToCheck.P2.X) <= X <= max(LineToCheck.P1.X, LineToCheck.P2.X) and min(LineToCheck.P1.Y, LineToCheck.P2.Y) <= Y <= max(LineToCheck.P1.Y, LineToCheck.P2.Y):
+                            DoesIntersect = True
+                    else: 
+                        DoesIntersect = False
+                else: 
+                    DoesIntersect = False
+
+            
+            LineIntersections.append(LineIntersects(LineToCheck, DoesIntersect, Point(X, Y)))
+        
+        DeadzonesThatIntersect.append(DeadzoneIntersections(LineIntersections))
+
+    return DeadzonesThatIntersect
+
+def CalculateMidPoint(P1, P2):
+    MidpointX = (P1.X + P2.X) / 2
+    MidpointY = (P1.Y + P2.Y) / 2
+    return Point(MidpointX, MidpointY)
+
+def FindNearestCorner(MidPoint, Corners):
+    Distances = []
+
+    for i in range(len(Corners)):
+        DeltaX = abs(MidPoint.X - Corners[i].X)
+        DeltaY = abs(MidPoint.Y - Corners[i].Y)
+        Distances.append(math.sqrt((DeltaX**2) + (DeltaY**2)))
+
+    return Corners[Distances.index(min(Distances))]
+
+def CalculateNewRoutePoint(MidPoint, NearestCorner):
+    NewX = 2 * NearestCorner.X - MidPoint.X
+    NewY = 2 * NearestCorner.Y - MidPoint.Y
+
+    return Point(NewX, NewY)
