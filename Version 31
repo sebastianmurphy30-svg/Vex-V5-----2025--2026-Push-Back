@@ -1,0 +1,374 @@
+#region VEXcode Generated Robot Configuration
+from vex import *
+import urandom
+import math
+
+# Brain should be defined by default
+brain=Brain()
+
+# Robot configuration code
+controller_1 = Controller(PRIMARY)
+BottomHalfIntake = Motor(Ports.PORT6, GearSetting.RATIO_18_1, False)
+TopIntakeMotor = Motor(Ports.PORT9, GearSetting.RATIO_18_1, False)
+MiddleIntakeMotor = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
+LeftMotorGroup_motor_a = Motor(Ports.PORT20, GearSetting.RATIO_18_1, False)
+LeftMotorGroup_motor_b = Motor(Ports.PORT10, GearSetting.RATIO_18_1, False)
+LeftMotorGroup = MotorGroup(LeftMotorGroup_motor_a, LeftMotorGroup_motor_b)
+RightMotorGroup_motor_a = Motor(Ports.PORT17, GearSetting.RATIO_18_1, False)
+RightMotorGroup_motor_b = Motor(Ports.PORT5, GearSetting.RATIO_18_1, False)
+RightMotorGroup = MotorGroup(RightMotorGroup_motor_a, RightMotorGroup_motor_b)
+HighestIntakeMotor = Motor(Ports.PORT8, GearSetting.RATIO_18_1, False)
+
+
+# wait for rotation sensor to fully initialize
+wait(30, MSEC)
+
+
+# Make random actually random
+def initializeRandomSeed():
+    wait(100, MSEC)
+    random = brain.battery.voltage(MV) + brain.battery.current(CurrentUnits.AMP) * 100 + brain.timer.system_high_res()
+    urandom.seed(int(random))
+      
+# Set random seed 
+initializeRandomSeed()
+
+
+def play_vexcode_sound(sound_name):
+    # Helper to make playing sounds from the V5 in VEXcode easier and
+    # keeps the code cleaner by making it clear what is happening.
+    print("VEXPlaySound:" + sound_name)
+    wait(5, MSEC)
+
+# add a small delay to make sure we don't print in the middle of the REPL header
+wait(200, MSEC)
+# clear the console to make sure we don't have the REPL in the console
+print("\033[2J")
+
+#endregion VEXcode Generated Robot Configuration
+
+# ------------------------------------------
+# 
+# 	Project:
+#	Author:
+#	Created:
+#	Configuration:
+# 
+# ------------------------------------------
+
+# Library imports
+from vex import *
+import math
+
+Veloity = 0
+
+WheelDiameter = 82.55
+GearRatio = 1
+
+Controller = Controller()
+
+LeftSideVelocity = 0
+RightSideVelocity = 0
+DriveModeSelected = "Normal"
+ModeSelected = "Normal"
+Store = True
+
+
+
+Precision = 0
+
+TopIntakeMotor.set_velocity(100, PERCENT)
+MiddleIntakeMotor.set_velocity(100, PERCENT)
+BottomHalfIntake.set_velocity(100, PERCENT)
+HighestIntakeMotor.set_velocity(100, PERCENT)
+
+
+#G
+
+def SpinLeftMotorsSetDist(Amount, Velocity):
+
+    
+    LeftMotorGroup.set_velocity(abs(Velocity), PERCENT)
+    
+    if Velocity >= 0:
+        Direction = REVERSE #Swapped Because Motors Are Flipped Between Both Sides
+    if Velocity < 0:
+        Direction = FORWARD #Swapped Because Motors Are Flipped Between Both Sides
+
+    LeftMotorGroup.spin_for(Direction, Amount, DEGREES)
+
+def SpinRightMotorsSetDist(Amount, Velocity):
+                
+
+    RightMotorGroup.set_velocity(abs(Velocity), PERCENT)
+    
+    if Velocity >= 0:
+        Direction = REVERSE
+    if Velocity < 0:
+        Direction = FORWARD
+
+    RightMotorGroup.spin_for(Direction, Amount, DEGREES)
+
+
+def ConvertToTicks(WheelDiameter, Distance):
+    Ticks = (Distance / ((WheelDiameter * 25.4) * math.pi)) * 360
+    return Ticks
+
+
+def SpinLeftMotorsUntil(Velocity):
+
+    LeftMotorGroup.set_velocity(abs(Velocity), PERCENT)
+    
+    if Velocity >= 0:
+        Direction = FORWARD
+    if Velocity < 0:
+        Direction = REVERSE
+
+    LeftMotorGroup.spin(Direction)
+
+def SpinRightMotorsUntil(Velocity):
+
+    RightMotorGroup.set_velocity(abs(Velocity), PERCENT)
+    
+    if (-1 * Velocity) >= 0:
+        Direction = FORWARD
+    if (-1 * Velocity) < 0:
+        Direction = REVERSE
+
+    RightMotorGroup.spin(Direction)
+
+def StopLeftMotors():
+    LeftMotorGroup.stop()
+
+def StopRightMotors():
+    RightMotorGroup.stop()
+
+def FindJoystickVelocity(JoystickPosition, NumberToRoundTo, Precision):
+    return int((NumberToRoundTo*(round((JoystickPosition) / NumberToRoundTo))) / Precision)
+
+
+
+#G
+
+def SelectNormalDriveMode():
+    global DriveModeSelected
+    DriveModeSelected = "Normal"
+def SelectRotationalDriveMode():
+    global DriveModeSelected
+    DriveModeSelected = "Rotational"
+def SelectLinearDriveMode():
+    global DriveModeSelected
+    DriveModeSelected = "Linear"
+
+    global ModeSelected
+    ModeSelected = "Precise"
+
+def SwitchBetweenNormalAndPreciseMode():
+    global ModeSelected
+    
+    if ModeSelected == "Normal":
+        ModeSelected = "Precise"
+
+    if ModeSelected == "Precise":
+        ModeSelected = "Normal"
+
+def SwitchBetweenScoreAndStore():
+    global Store
+    
+    if Store:
+        Store = False
+    else:
+        Store = True
+
+#G
+
+def NormalDrive(NumberToRoundTo, Precision):
+    LeftSideVelocity = FindJoystickVelocity(controller_1.axis3.position(), NumberToRoundTo, Precision)
+    RightSideVelocity = FindJoystickVelocity(controller_1.axis2.position(), NumberToRoundTo, Precision)
+
+    if LeftSideVelocity != 0 or RightSideVelocity != 0:
+        SpinLeftMotorsUntil(LeftSideVelocity)
+        SpinRightMotorsUntil(RightSideVelocity)
+
+    if RightSideVelocity == 0 and LeftSideVelocity == 0:
+        StopLeftMotors()
+        StopRightMotors()
+
+def RotationDrive(NumberToRoundTo, Precision):
+    LeftSideVelocity = FindJoystickVelocity(controller_1.axis3.position(), NumberToRoundTo, Precision)
+    RightSideVelocity = FindJoystickVelocity(controller_1.axis2.position(), NumberToRoundTo, Precision)
+
+    RotationalVelocity = abs((LeftSideVelocity / 2) + (RightSideVelocity / 2))
+
+    if RotationalVelocity != 0 and LeftSideVelocity > RightSideVelocity:
+        SpinLeftMotorsUntil(RotationalVelocity)
+        SpinRightMotorsUntil(-1 * (RotationalVelocity))
+
+    if RotationalVelocity != 0 and RightSideVelocity > LeftSideVelocity:
+
+        SpinRightMotorsUntil(RotationalVelocity)
+        SpinLeftMotorsUntil(-1 * (RotationalVelocity))
+
+    if RotationalVelocity == 0:
+        StopLeftMotors()
+        StopRightMotors()
+
+def LinearDrive(NumberToRoundTo, Precision): 
+
+    LinearVelocity = 0
+    LeftSideVelocity = FindJoystickVelocity(controller_1.axis3.position(), NumberToRoundTo, Precision)
+    RightSideVelocity = FindJoystickVelocity(controller_1.axis2.position(), NumberToRoundTo, Precision)
+
+    LinearVelocity = (LeftSideVelocity + RightSideVelocity) / 2
+
+    if LinearVelocity != 0:
+        SpinLeftMotorsUntil(LinearVelocity)
+        SpinRightMotorsUntil(LinearVelocity)
+
+    if LinearVelocity == 0:
+        StopLeftMotors()
+        StopRightMotors()
+
+#G
+
+def IntakeToTop():
+    HighestIntakeMotor.spin (REVERSE)
+    TopIntakeMotor.spin(FORWARD)
+    MiddleIntakeMotor.spin(REVERSE)
+
+def ExtakeFromTop():
+    MiddleIntakeMotor.spin(FORWARD)   
+    TopIntakeMotor.spin(REVERSE)
+
+def Intake():
+    global Store
+
+    BottomHalfIntake.spin(REVERSE)
+    MiddleIntakeMotor.spin(REVERSE)
+    
+    if Store != True:
+            TopIntakeMotor.spin(REVERSE)
+
+
+def Extake():
+    global Store
+    
+    if Store != True:
+        BottomHalfIntake.spin(FORWARD) #Swapper Forward and Reverse Because Of Motor Orientation
+
+    MiddleIntakeMotor.spin(FORWARD)
+    TopIntakeMotor.spin(FORWARD)
+
+def StopIntakeMotors():
+    BottomHalfIntake.stop()
+    MiddleIntakeMotor.stop()
+    TopIntakeMotor.stop()
+    HighestIntakeMotor.stop()
+    
+
+def IntakeController():
+    
+    if controller_1.buttonR1.pressing():
+        Extake()
+    elif controller_1.buttonL1.pressing():
+        Intake()
+    elif controller_1.buttonL2.pressing():
+        IntakeToTop()
+    elif controller_1.buttonR2.pressing():
+        ExtakeFromTop()
+    else:
+        StopIntakeMotors()
+
+
+#Auton Functions:
+def Rotate(DegreesToRotate):
+    global WheelDiameter
+    
+    LengthOfRobot = 457.2
+    RotationCircle = 2*math.pi*(LengthOfRobot/2)
+    Multiplier = DegreesToRotate / 360
+    CircumfrenceOfWheels = 2 * math.pi * WheelDiameter
+    WheelDegreeChangeOutput = (Multiplier * RotationCircle) / (CircumfrenceOfWheels / 360)
+
+    if WheelDegreeChangeOutput > 0:
+        RightMotorGroup.spin_for(FORWARD, WheelDegreeChangeOutput, DEGREES, wait=False) #Reverse Because Directions Are Swapped
+        LeftMotorGroup.spin_for(FORWARD, WheelDegreeChangeOutput, DEGREES)
+    else:
+        RightMotorGroup.spin_for(REVERSE, WheelDegreeChangeOutput, DEGREES, wait=False) #Reverse Because Directions Are Swapped
+        LeftMotorGroup.spin_for(REVERSE, WheelDegreeChangeOutput, DEGREES)
+    
+
+def Drive(DistanceToDrive):
+    global WheelDiameter
+    
+    CircumfrenceOfWheels = 2 * math.pi * WheelDiameter
+    WheelDegreeChangeOutput = DistanceToDrive / (CircumfrenceOfWheels / 360)
+
+    if WheelDegreeChangeOutput > 0:
+        RightMotorGroup.spin_for(REVERSE, WheelDegreeChangeOutput, DEGREES, wait=False) #Reverse Because Directions Are Swapped
+        LeftMotorGroup.spin_for(FORWARD, WheelDegreeChangeOutput, DEGREES)
+    else:
+        RightMotorGroup.spin_for(FORWARD, WheelDegreeChangeOutput, DEGREES, wait=False) #Reverse Because Directions Are Swapped
+        LeftMotorGroup.spin_for(REVERSE, WheelDegreeChangeOutput, DEGREES)
+
+
+#G
+
+def pre_autonomous():
+    # actions to do when the program starts
+    brain.screen.clear_screen()
+    brain.screen.print("pre auton code")
+    wait(1, SECONDS)
+
+
+    controller_1.buttonX.pressed(SelectNormalDriveMode)
+    controller_1.buttonB.pressed(SelectRotationalDriveMode) #For Some Reason Button B Activates Button A
+    controller_1.buttonA.pressed(SelectLinearDriveMode) #And Some Reason Button A Activates Button B
+    controller_1.buttonY.pressed(SwitchBetweenNormalAndPreciseMode)
+
+    controller_1.buttonUp.pressed(SwitchBetweenScoreAndStore)
+
+
+def autonomous():
+    Drive(400)
+    Rotate(90)
+    Drive(800)
+
+ 
+    
+
+def user_control():
+    global DriveModeSelected
+    global ModeSelected
+    brain.screen.clear_screen()
+    # place driver control in this while loop
+
+    while True:
+        brain.screen.print(type(controller_1.axis3.position()))
+        brain.screen.print(type(controller_1.axis2.position()))
+        global Precision
+        wait(20, MSEC)
+
+        if ModeSelected == "Normal":
+            Precision = 1
+        
+        elif ModeSelected == "Precise":
+            Precision = 10
+
+
+        if DriveModeSelected == "Normal":
+                NormalDrive(20, Precision)
+        elif DriveModeSelected == "Rotational":
+                RotationDrive(10, Precision)
+        elif DriveModeSelected == "Linear":
+                LinearDrive(20, Precision)
+        
+        IntakeController()
+
+        
+        
+        
+
+# create competition instance
+comp = Competition(user_control, autonomous)
+pre_autonomous()
